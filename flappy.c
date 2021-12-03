@@ -53,7 +53,7 @@ char pad;		// needed to read controller input
 char last_controller_state; //keeps track of the previous controller input
 char i;			// multi-use variable useful for loops
 byte direction;
-byte enemy =0;
+byte enemy ;
 
 
 static unsigned char bright;
@@ -113,7 +113,7 @@ const unsigned char tinyBullet[]={
 };
 
 const unsigned char* const EnemySeq[2] = {
-  enemyCloud,bulletBill
+  bulletBill, enemyCloud
 };
 
 
@@ -179,7 +179,7 @@ void new_enemy()
 enemy_height=(rand8() & 180)+26;
 
   
-    enemy +=1 ;
+    
     enemies_x[0] = 240;
     enemies_y[0] = enemy_height;
     enemies_dx[0] = -2;
@@ -395,7 +395,7 @@ void update()
   
 	for (i=0; i<NUM_ENEMIES; i++)
         {
-   		if ((iabs(enemies_x[i]-50)<8) && iabs(actor_y[0]-(enemies_y[i]-6)<12))
+   		if ((iabs(enemies_x[i]-50)<8) && iabs(actor_y[0]-(enemies_y[i]-6)<16))
         	{
         		sfx_play(1,0);
       			pal_fade_to(8);
@@ -453,6 +453,7 @@ void draw_sprite(){
 		}
                 */
       for (i=0; i<NUM_ENEMIES-1; i++) {
+        enemy= enemy +1;
       enemy = enemy&2;
       oam_id = oam_meta_spr(enemies_x[i], enemies_y[i], oam_id, EnemySeq[enemy]);
       enemies_x[i] += enemies_dx[i];
@@ -559,6 +560,7 @@ void scroll_demo() {
   {
     oam_id = 4;
     read_controller();
+    enemy =x_pos&16;
     
     if ((x_pos & 7)==0)
     {
