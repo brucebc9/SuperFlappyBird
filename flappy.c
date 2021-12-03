@@ -673,7 +673,7 @@ void main(void) {
   nmi_set_callback(famitone_update);
   // play music
  music_play(0);
- //title_screen();
+ title_screen();
 
 while(1){
   
