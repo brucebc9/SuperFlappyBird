@@ -459,9 +459,9 @@ void draw_sprite(){
       enemies_y[i] += enemies_dy[i];
         
       }
-  	oam_id = oam_spr(enemies_x[1],enemies_y[1],0xE2,1,oam_id);
-        enemies_x[1] += enemies_dx[1];
-        enemies_y[1] += enemies_dy[1];
+  	//oam_id = oam_spr(enemies_x[1],enemies_y[1],0xE2,1,oam_id);
+      //  enemies_x[1] += enemies_dx[1];
+      //  enemies_y[1] += enemies_dy[1];
  
   	// draw "coins" at the top in sprites
 	oam_id = oam_meta_spr(24,8,oam_id, CoinsSpr);
