@@ -41,6 +41,7 @@ byte last_seg_height;	// remembers previous segment height;
 byte seg_width;		// segment width in metatiles of pipes
 byte seg_char;		// character to draw
 byte seg_palette;	// attribute table value
+byte enemy_height;	// random value for determining spawning height of enemy
 byte high;		// high position of pipe opening
 byte low;		// low position of pipe opening
 byte x_pos;		// defines position by 8*8 tile
@@ -52,6 +53,7 @@ char pad;		// needed to read controller input
 char last_controller_state; //keeps track of the previous controller input
 char i;			// multi-use variable useful for loops
 byte direction;
+byte enemy =0;
 
 
 static unsigned char bright;
@@ -85,12 +87,15 @@ const unsigned char name[]={\
         8,      8,      (code)+17,   bird_color, \
         128};
 
+
+
 DEF_METASPRITE_2x2(bird, 0x06, 0);
 DEF_METASPRITE_2x2(birdFly, 0x02, 0);
 DEF_METASPRITE_2x2(birdFly2, 0x04, 0);
 DEF_METASPRITE_2x2(bird_down, 0x20, 0);
 DEF_METASPRITE_2x2(enemyCloud, 0x5C, 0);
 DEF_METASPRITE_2x2(bulletBill, 0x5E, 0);
+
 
 const unsigned char* const birdSeq[16] = {
   bird, birdFly, birdFly2, 
@@ -100,6 +105,17 @@ const unsigned char* const birdSeq[16] = {
   bird, birdFly, birdFly2, 
   bird, birdFly,
 };
+
+
+const unsigned char tinyBullet[]={
+  0,  0,0xE2,3,
+  32
+};
+
+const unsigned char* const EnemySeq[2] = {
+  enemyCloud,bulletBill
+};
+
 
 const unsigned char CoinsSpr[]={
   0,  0,0x7b,3,
@@ -111,6 +127,8 @@ const unsigned char CoinsSpr[]={
   128
 };
 
+
+
 // sprite x/y positions
 #define NUM_ACTORS 1
 byte actor_x[NUM_ACTORS];
@@ -118,6 +136,13 @@ byte actor_y[NUM_ACTORS];
 // actor x/y deltas per frame (signed)
 sbyte actor_dx[NUM_ACTORS];
 sbyte actor_dy[NUM_ACTORS];
+
+#define NUM_ENEMIES 2
+byte enemies_x[NUM_ENEMIES];
+byte enemies_y[NUM_ENEMIES];
+// actor x/y deltas per frame (signed)
+sbyte enemies_dx[NUM_ENEMIES];
+sbyte enemies_dy[NUM_ENEMIES];
 
 /*{pal:"nes",layout:"nes"}*/
 const char PALETTE[32] = { 
@@ -128,8 +153,8 @@ const char PALETTE[32] = {
   0x0D,0x1A,0x39,0x00,
   0x10,0x00,0x30,0x00,
 
-  0x0D,0x16,0x30,0x00,	// 
-  0x0D,0x15,0x30,0x00,	//
+  0x20,0x16,0x0D,0x00,	// 
+  0x0D,0x16,0x30,0x00,	//
   0x0D,0x12,0x30,0x00,
   0x29,0x00,0x0D	// player sprites
 };
@@ -146,6 +171,28 @@ void new_segment() {
   seg_palette = 0;
   seg_char = 0xDF;
 }
+
+
+void new_enemy()
+{
+
+enemy_height=(rand8() & 180)+26;
+
+  
+    enemy +=1 ;
+    enemies_x[0] = 240;
+    enemies_y[0] = enemy_height;
+    enemies_dx[0] = -2;
+    enemies_dy[0] = 0;
+  
+    enemies_x[1] = 180;
+    enemies_y[1] = 180;
+    enemies_dx[1] = -2;
+    enemies_dy[1] = 0;
+
+
+}
+
 
 // function to write a string into the name table
 //   adr = start address in name table
@@ -181,6 +228,8 @@ void reset_players() {
     actor_y[0] = 80;
     actor_dx[0] = 0;
     actor_dy[0] = 1;
+  
+
   
 }
 
@@ -343,8 +392,21 @@ void update()
    low=209-(last_seg_height*16);
    high=low-74;
   
+  
+	for (i=0; i<NUM_ENEMIES; i++)
+        {
+   		if ((iabs(enemies_x[i]-50)<8) && iabs(actor_y[0]-(enemies_y[i]-6)<12))
+        	{
+        		sfx_play(1,0);
+      			pal_fade_to(8);
+        		gameover=1;
+        	}
+        }
+  
+  
    if(x_scroll>160)
     {
+
      if ((x_pos>3&&x_pos<10) && (actor_y[0]<high || actor_y[0]>low+4))
       {
        //reset_players();
@@ -353,8 +415,10 @@ void update()
         gameover=1;
        //sfx_play(3,0);
       }
-    } 
-   if (actor_y[0]>210)
+
+            
+    }
+     else if (actor_y[0]>210)
    {
      sfx_play(1,0);
      pal_fade_to(8);
@@ -366,18 +430,7 @@ void update()
   
 }
 
-void draw_sprite(){
-  // draw and move all actors
-  //if (actor_dy[0]>0){
-   // direction=1;
-//  }
-  //else if (actor_dy[0]>0){
-    //direction=1;
-//  }
- // else if (actor_dy[0]<0){
-  //  direction=0;
- // }
-          
+void draw_sprite(){   
       for (i=0; i<NUM_ACTORS; i++) {
       byte runseq = actor_y[i] & 7;
       if (actor_dy[i] >= 0)
@@ -388,12 +441,32 @@ void draw_sprite(){
       actor_x[i] += actor_dx[i];
       actor_y[i] += actor_dy[i]; 
       }
-  
-  
+  /*
+  	for(i = 0; i < MAX_ENEMY; ++i){
+		temp_y = enemy_y[i];
+		if(temp_y == TURN_OFF) continue;
+		temp1 = enemy_active[i];
+		temp2 = enemy_x[i];
+		if(temp2 > 0xf0) continue;
+		if(temp1 && (temp_y < 0xf0)) {
+			oam_id = oam_meta_spr(temp2, temp_y, oam_id, BulletBill);
+		}
+                */
+      for (i=0; i<NUM_ENEMIES-1; i++) {
+      enemy = enemy&2;
+      oam_id = oam_meta_spr(enemies_x[i], enemies_y[i], oam_id, EnemySeq[enemy]);
+      enemies_x[i] += enemies_dx[i];
+      enemies_y[i] += enemies_dy[i];
+        
+      }
+  	oam_id = oam_spr(enemies_x[1],enemies_y[1],0xE2,1,oam_id);
+        enemies_x[1] += enemies_dx[1];
+        enemies_y[1] += enemies_dy[1];
+ 
   	// draw "coins" at the top in sprites
 	oam_id = oam_meta_spr(24,8,oam_id, CoinsSpr);
 	//temp1 = coins + 0xf0;
-	//oam_id = oam_spr(64,16,temp1,3,oam_id);
+	
 }
 
 void loser_screen()
@@ -485,8 +558,15 @@ void scroll_demo() {
   while (1) 
   {
     oam_id = 4;
-    read_controller(); 
+    read_controller();
+    
+    if ((x_pos & 7)==0)
+    {
+    if (x_pos==0)
+    new_enemy();
+    }
     draw_sprite();
+    
 
     x_pos = ((x_scroll+3)/8 + 32) & 15;
     x_exact_pos = ((x_scroll+3)/8 + 32) & 255;
@@ -495,7 +575,7 @@ void scroll_demo() {
     //if ((x_scroll & 7) == 0)
     update();
     
-    if(gameover==1)
+   if(gameover==1)
       break;
 
     check_score();
@@ -593,7 +673,7 @@ void main(void) {
   nmi_set_callback(famitone_update);
   // play music
  music_play(0);
- title_screen();
+ //title_screen();
 
 while(1){
   
