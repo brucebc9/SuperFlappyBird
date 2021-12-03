@@ -185,7 +185,7 @@ enemy_height=(rand8() & 180)+26;
     enemies_dx[0] = -2;
     enemies_dy[0] = 0;
   
-    enemies_x[1] = 180;
+    enemies_x[1] = 240;
     enemies_y[1] = 180;
     enemies_dx[1] = -2;
     enemies_dy[1] = 0;
