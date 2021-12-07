@@ -61,7 +61,7 @@ static int iy,dy;
 
 
 // number of rows in scrolling playfield (without status bar)
-#define PLAYROWS 26
+#define PLAYROWS 27
 #define CHAR(x) ((x+64))
 #define COLOR_SCORE 1 
 
@@ -734,7 +734,7 @@ void main(void) {
   nmi_set_callback(famitone_update);
   // play music
  music_play(0);
- //title_screen();
+ title_screen();
 
 while(1){
   
