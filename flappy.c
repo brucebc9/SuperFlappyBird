@@ -61,15 +61,15 @@ static int iy,dy;
 
 
 // number of rows in scrolling playfield (without status bar)
-#define PLAYROWS 27
+#define PLAYROWS 26
 #define CHAR(x) ((x+64))
-#define COLOR_SCORE 1
+#define COLOR_SCORE 1 
 
 //#define PLAYER_MAX_VELOCITY -10 // Max speed of the player; we won't let you go past this.
 //#define PLAYER_VELOCITY_ACCEL 2 // How quickly do we get up to max velocity? 
 // buffers that hold vertical slices of nametable data
 #define FP_BITS 4
-#define bird_color 0
+#define bird_color 1
 
 char ntbuf1[PLAYROWS];	// left side
 char ntbuf2[PLAYROWS];	// right side
@@ -147,7 +147,7 @@ const char PALETTE[32] = {
   0x22,			// background color
 
   0x29,0x38,0x0D,0x00,	// 
-  0x0D,0x20,0x00,0x00,	// pipes & tiles
+  0x0D,0x1A,0x00,0x00,	// pipes & tiles
   0x0D,0x1A,0x39,0x00,
   0x10,0x00,0x30,0x00,
 
@@ -171,10 +171,11 @@ void new_segment() {
 }
 
 
+
 void new_enemy()
 {
 
-enemy_height=(rand8() & 180)+26;
+enemy_height=(rand8() & 180)+32;
 
   
     
@@ -213,7 +214,8 @@ void draw_bcd_word(byte col, byte row, word bcd) {
 
 void add_score(word bcd) {
   player_score = bcd_add(player_score, bcd);
-  draw_bcd_word(3, 3, player_score);
+ // pal_col(2,0x20);
+  draw_bcd_word(15, 2, player_score);
 }
 
 // returns absolute value of x
@@ -234,9 +236,17 @@ void reset_players() {
 void clrscr() {
   vrambuf_clear();
   ppu_off();
-  vram_adr(0x2000);
-  vram_fill(8, 32*28);
+  vram_adr(NTADR_A(0,0));
+  //pal_col(1,i&2?0x00:0x8);
+   vram_fill(0x96, 3*32);
+  //vram_adr(NTADR_A(0,3));
+  //vram_adr(0x2000);
+  vram_adr(NTADR_A(0,3));
+  vram_fill(0xb0, 1*32);
+  vram_adr(NTADR_A(0,4));
+  vram_fill(8, 26*32);
   vram_adr(0x24c0);
+  
   ppu_on_bg();
 }
 
@@ -283,6 +293,53 @@ void set_metatile(byte y, byte ch) {
   }
 }
 
+void set_metatile2(byte y, byte ch) {
+  if (seg_width%2==0){
+  ntbuf1[y*2] = ch;
+  ntbuf1[y*2+1] = seg_char;
+  ntbuf2[y*2] = ch+1;
+  ntbuf2[y*2+1] = seg_char+1;
+  }
+  else{
+  ntbuf1[y*2] = ch+2;
+  ntbuf1[y*2+1] = seg_char+1;
+  ntbuf2[y*2] = ch+3;
+  ntbuf2[y*2+1] = seg_char+2;
+  }
+}
+
+void set_metatile3(byte y, byte ch) {
+  if (seg_width%2==0){
+  ntbuf1[y*2] = seg_char;
+  ntbuf1[y*2+1] = ch;
+  ntbuf2[y*2] = seg_char+1;
+  ntbuf2[y*2+1] = ch+1;
+  }
+  else{
+  ntbuf1[y*2] = seg_char+1;
+  ntbuf1[y*2+1] = ch+2;
+  ntbuf2[y*2] = seg_char+2;
+  ntbuf2[y*2+1] = ch+3;
+  }
+}
+
+void set_metatile4(byte y, byte ch) {
+  if (seg_width%2==0){
+  ntbuf1[y*2] = 0xA5;
+  ntbuf1[y*2+1] = ch;
+  ntbuf2[y*2] = 0x94;
+  ntbuf2[y*2+1] = ch+1;
+  }
+  else{
+  ntbuf1[y*2] = 0x94;
+  ntbuf1[y*2+1] = ch+2;
+  ntbuf2[y*2] = 0xa6+2;
+  ntbuf2[y*2+1] = ch+3;
+  }
+}
+
+
+
 // set attribute table entry in attrbuf
 // x and y are metatile coordinates
 // pal is the index to set
@@ -300,32 +357,37 @@ void fill_buffer(byte x) {
   memset(ntbuf1, 0, sizeof(ntbuf1));
   memset(ntbuf2, 0, sizeof(ntbuf2));
   // draw a random star
- // ntbuf1[rand8() & 15] = '.';
+   //ntbuf1[rand8() & 15] = 0x9E;
   // draw segment slice to both nametable buffers
   for (i=0; i<seg_height; i++) {
     y = PLAYROWS/2-2-i;
     set_metatile(y, seg_char);
     set_attr_entry(x, y, seg_palette);
     }
+    set_metatile2(y, 0xDB);
+    set_attr_entry(x, y, seg_palette);
   for (i=0; i<seg_height2; i++){
     j = PLAYROWS/2-13+i;
     set_metatile(j, seg_char);
     set_attr_entry(x, j, seg_palette);
   }
+    set_metatile3(j  , 0xD7);
+    set_attr_entry(x, y, seg_palette);
   
 }
 void fill_blank(byte x) {
-  //byte i,y;
+   //byte i,y;
   // clear nametable buffers
   memset(ntbuf1, 0, sizeof(ntbuf1));
   memset(ntbuf2, 0, sizeof(ntbuf2));
-  // draw a random star
-  //ntbuf1[rand8() & 15] = '.';
   // draw segment slice to both nametable buffers
- /* for (i=0; i<seg_height; i++) {
+ /* if (seg_width==5||seg_width==6)
+  {
+    for (i=0; i<2; i++) {
     y = PLAYROWS/2-1-i;
-    set_metatile(y, seg_char);
+    set_metatile4(y, 0xA9);
     set_attr_entry(x, y, seg_palette);
+  }
   }*/
   x=x;
 }
@@ -393,7 +455,7 @@ void update()
   
 	for (i=0; i<NUM_ENEMIES; i++)
         {
-   		if ((iabs(enemies_x[i]-50)<8) && iabs(actor_y[0]-(enemies_y[i]-6)<16))
+   		if ((iabs(enemies_x[i]-70)<17) && iabs(actor_y[0]-(enemies_y[i]-6)<17))
         	{
         		sfx_play(1,0);
       			pal_fade_to(8);
@@ -416,7 +478,7 @@ void update()
 
             
     }
-     else if (actor_y[0]>210)
+    if (actor_y[0]>210)
    {
      sfx_play(1,0);
      pal_fade_to(8);
@@ -451,7 +513,7 @@ void draw_sprite(){
 		}
                 */
       for (i=0; i<NUM_ENEMIES-1; i++) {
-        enemy= enemy +1;
+      enemy= enemy +1;
       enemy = enemy&2;
       oam_id = oam_meta_spr(enemies_x[i], enemies_y[i], oam_id, EnemySeq[enemy]);
       enemies_x[i] += enemies_dx[i];
@@ -463,7 +525,7 @@ void draw_sprite(){
       //  enemies_y[1] += enemies_dy[1];
  
   	// draw "coins" at the top in sprites
-	oam_id = oam_meta_spr(24,8,oam_id, CoinsSpr);
+	//oam_id = oam_meta_spr(24,8,oam_id, CoinsSpr);
 	//temp1 = coins + 0xf0;
 	
 }
@@ -506,7 +568,7 @@ void read_controller()
       // poll controller i (0-1)
       pad = pad_poll(0);
       // move actor[i] up/down
-      if (pad&PAD_A && actor_y[i]>8) {
+      if (pad&PAD_A && actor_y[i]>32) {
         actor_dy[0]=-7;
        // sfx_play(3,0);
         }
@@ -557,7 +619,7 @@ void scroll_demo() {
   {
     oam_id = 4;
     read_controller();
-    enemy =x_pos&16;
+   enemy =x_pos&4;
     
     if ((x_pos & 7)==0)
     {
@@ -584,7 +646,7 @@ void scroll_demo() {
     vrambuf_clear();
  
     // split at sprite zero and set X scroll
-    split(x_scroll, 0);
+     split(x_scroll, 0);
                
     // scroll to the left
     scroll_left();
@@ -672,11 +734,12 @@ void main(void) {
   nmi_set_callback(famitone_update);
   // play music
  music_play(0);
- title_screen();
+ //title_screen();
 
 while(1){
   
   clrscr();
+  pal_all(PALETTE);
 
   player_score = 0;
   gameover=0;
@@ -687,7 +750,7 @@ while(1){
   reset_players();
   
   //sets sprite 0 to declare split line
-  oam_spr(0, 29, 0xa0, 0x20, 0); 
+   oam_spr(1, 30, 0x50, 0x20, 0); 
   //put_str(NTADR_A(2,2), "Birdie");
   
   // set attributes
