@@ -1,9 +1,7 @@
-
 #include "neslib.h"
 #include <stdlib.h>
 #include <string.h>
 #include "flappyBird_titlescreen.h"
-#include "flappyBird_titlescreen2.h"
 
 // 0 = horizontal mirroring
 // 1 = vertical mirroring
@@ -508,11 +506,10 @@ void read_controller()
       // poll controller i (0-1)
       pad = pad_poll(0);
       // move actor[i] up/down
-      if (pad&PAD_UP && actor_y[i]>8) {
+      if (pad&PAD_A && actor_y[i]>8) {
         actor_dy[0]=-7;
        // sfx_play(3,0);
         }
-      else if (pad&PAD_DOWN && actor_y[i]<212) actor_dy[i]=1;
       else if (actor_y[i]>211){
         actor_dy[0]=0;
       }
