@@ -79,18 +79,18 @@ char attrbuf[PLAYROWS/4];
 
 #define DEF_METASPRITE_2x2(name,code,pal)\
 const unsigned char name[]={\
-        0,      0,      (code),   bird_color, \
-        8,      0,      (code)+1,   bird_color, \
-        0,      8,      (code)+16,   bird_color, \
-        8,      8,      (code)+17,   bird_color, \
+        0,      0,      (code),   pal, \
+        8,      0,      (code)+1,   pal, \
+        0,      8,      (code)+16,   pal, \
+        8,      8,      (code)+17,   pal, \
         128};
 
 
 
-DEF_METASPRITE_2x2(bird, 0x06, 0);
-DEF_METASPRITE_2x2(birdFly, 0x02, 0);
-DEF_METASPRITE_2x2(birdFly2, 0x04, 0);
-DEF_METASPRITE_2x2(bird_down, 0x20, 0);
+DEF_METASPRITE_2x2(bird, 0x06, bird_color);
+DEF_METASPRITE_2x2(birdFly, 0x02, bird_color);
+DEF_METASPRITE_2x2(birdFly2, 0x04, bird_color);
+DEF_METASPRITE_2x2(bird_down, 0x20, bird_color);
 DEF_METASPRITE_2x2(enemyCloud, 0x5C, 0);
 DEF_METASPRITE_2x2(bulletBill, 0x5E, 0);
 
